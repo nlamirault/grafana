@@ -7,6 +7,8 @@ import { useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../h
 import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
 import { migrateVariableQuery } from '../../migrations';
 import { VariableQueryField } from './VariableQueryField';
+import { Dimensions } from '..';
+import { InlineField } from '@grafana/ui';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData, VariableQuery>;
 
@@ -25,11 +27,12 @@ const queryTypes: Array<{ value: string; label: string }> = [
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const parsedQuery = migrateVariableQuery(query);
 
-  const { region, namespace, metricName, dimensionKey } = parsedQuery;
+  const { region, namespace, metricName, dimensionKey, dimensions } = parsedQuery;
   const [regions, regionIsLoading] = useRegions(datasource);
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, region, namespace);
   const dimensionKeys = useDimensionKeys(datasource, region, namespace, metricName);
+  const queryDimensionKeys = useDimensionKeys(datasource, region, namespace, metricName, dimensions ?? {});
 
   const onRegionChange = async (region: string) => {
     const validatedQuery = await sanitizeQuery({
@@ -126,13 +129,25 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onChange={(value: string) => onQueryChange({ ...parsedQuery, dimensionKey: value })}
             label="Dimension Key"
           />
-          <VariableTextField
-            value={query.dimensionFilters}
+          <InlineField label="Dimensions" labelWidth={20} htmlFor={'inline-field'}>
+            <Dimensions
+              query={parsedQuery}
+              onChange={(dimensions) => {
+                console.log('in editor', dimensions);
+                //onChange({ ...parsedQuery, dimensions });
+              }}
+              dimensionKeys={queryDimensionKeys}
+              disableExpressions={true}
+              datasource={datasource}
+            />
+          </InlineField>
+          {/* <VariableTextField
+            value={dimensionFilters}
             tooltip='A JSON object representing dimensions and the values to filter on. Ex. { "filter_name1": [ "filter_value1" ], "filter_name2": [ "*" ] }'
             placeholder='{"key":["value"]}'
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, dimensionFilters: value })}
             label="Filters"
-          />
+          /> */}
         </>
       )}
       {parsedQuery.queryType === VariableQueryType.EBSVolumeIDs && (

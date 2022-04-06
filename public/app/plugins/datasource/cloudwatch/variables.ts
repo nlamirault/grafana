@@ -87,15 +87,21 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     }));
   }
 
-  async handleDimensionValuesQuery({ namespace, region, dimensionKey, metricName, dimensionFilters }: VariableQuery) {
+  async handleDimensionValuesQuery({ namespace, region, dimensionKey, metricName, dimensions }: VariableQuery) {
     if (!dimensionKey || !metricName) {
       return [];
     }
-    var filterJson = {};
-    if (dimensionFilters) {
-      filterJson = JSON.parse(dimensionFilters);
-    }
-    const keys = await this.datasource.getDimensionValues(region, namespace, metricName, dimensionKey, filterJson);
+    // var filterJson = {};
+    // if (dimensionFilters) {
+    //   filterJson = JSON.parse(dimensionFilters);
+    // }
+    const keys = await this.datasource.getDimensionValues(
+      region,
+      namespace,
+      metricName,
+      dimensionKey,
+      dimensions ?? {}
+    );
     return keys.map((s: { label: string; value: string }) => ({
       text: s.label,
       value: s.value,

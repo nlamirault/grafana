@@ -3,15 +3,16 @@ import React, { useMemo, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorList } from '@grafana/experimental';
 import { CloudWatchDatasource } from '../../datasource';
-import { CloudWatchMetricsQuery, Dimensions as DimensionsType } from '../../types';
+import { Dimensions as DimensionsType, DimensionsQuery } from '../../types';
 import { FilterItem } from './FilterItem';
 
 export interface Props {
-  query: CloudWatchMetricsQuery;
+  query: DimensionsQuery;
   onChange: (dimensions: DimensionsType) => void;
   datasource: CloudWatchDatasource;
   dimensionKeys: Array<SelectableValue<string>>;
   disableExpressions: boolean;
+  multiValue?: boolean;
 }
 
 export interface DimensionFilterCondition {
@@ -44,14 +45,17 @@ const filterConditionsToDimensions = (filters: DimensionFilterCondition[]) => {
 
 export const Dimensions: React.FC<Props> = ({ query, datasource, dimensionKeys, disableExpressions, onChange }) => {
   const dimensionFilters = useMemo(() => dimensionsToFilterConditions(query.dimensions), [query.dimensions]);
+  console.log('filters', query.dimensions, dimensionFilters);
   const [items, setItems] = useState<DimensionFilterCondition[]>(dimensionFilters);
   const onDimensionsChange = (newItems: Array<Partial<DimensionFilterCondition>>) => {
+    console.log(newItems);
     setItems(newItems);
 
     // The onChange event should only be triggered in the case there is a complete dimension object.
     // So when a new key is added that does not yet have a value, it should not trigger an onChange event.
     const newDimensions = filterConditionsToDimensions(newItems);
     if (!isEqual(newDimensions, query.dimensions)) {
+      console.log('calling onChange');
       onChange(newDimensions);
     }
   };
@@ -67,7 +71,7 @@ export const Dimensions: React.FC<Props> = ({ query, datasource, dimensionKeys, 
 
 function makeRenderFilter(
   datasource: CloudWatchDatasource,
-  query: CloudWatchMetricsQuery,
+  query: DimensionsQuery,
   dimensionKeys: Array<SelectableValue<string>>,
   disableExpressions: boolean
 ) {
@@ -76,6 +80,7 @@ function makeRenderFilter(
     onChange: (item: DimensionFilterCondition) => void,
     onDelete: () => void
   ) {
+    console.log(dimensionKeys);
     return (
       <FilterItem
         filter={item}
